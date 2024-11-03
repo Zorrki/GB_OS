@@ -1,0 +1,144 @@
+Используя команду cat, создать два файла с данными, а затем объединить их.
+Просмотреть содержимое созданного файла. 
+Переименовать файл, дав ему новое имя.
+
+root@karartjom-idea:/home/karartjom/GB_OS# cat > file1
+test1 file1
+root@karartjom-idea:/home/karartjom/GB_OS# cat > file2
+test2 file2
+root@karartjom-idea:/home/karartjom/GB_OS# cat file1 file2 > combined
+root@karartjom-idea:/home/karartjom/GB_OS# cat combined
+test1 file1
+test2 file2
+root@karartjom-idea:/home/karartjom/GB_OS# mv combined new_comby
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+file1  file2  new_comby
+
+=============================
+Создать несколько файлов. 
+Создать директорию, переместить файлы туда. 
+Удалить все созданные в этом и предыдущем задании директории и файлы.
+
+root@karartjom-idea:/home/karartjom/GB_OS# touch new1 new2 new3
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+file1  file2  new1  new2  new3  new_comby
+root@karartjom-idea:/home/karartjom/GB_OS# mkdir newey
+root@karartjom-idea:/home/karartjom/GB_OS# mv file1 file2 new1 new2 new3 new_comby newey/
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+newey
+root@karartjom-idea:/home/karartjom/GB_OS# cd newey
+root@karartjom-idea:/home/karartjom/GB_OS/newey# ls
+file1  file2  new1  new2  new3  new_comby
+root@karartjom-idea:/home/karartjom/GB_OS/newey# cd ..
+root@karartjom-idea:/home/karartjom/GB_OS# rm -rf newey/
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+root@karartjom-idea:/home/karartjom/GB_OS#
+
+=============================
+Создать файл file1 и наполнить его произвольным содержимым. 
+Скопировать его в file2. 
+
+root@karartjom-idea:/home/karartjom/GB_OS# nano
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+test1
+root@karartjom-idea:/home/karartjom/GB_OS# cat test1
+blablabla
+
+root@karartjom-idea:/home/karartjom/GB_OS# cp test1 test2
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+test1  test2
+root@karartjom-idea:/home/karartjom/GB_OS# cat test2
+blablabla
+
+root@karartjom-idea:/home/karartjom/GB_OS# cat test1
+blablabla
+
+=============================
+Создать символическую ссылку file3 на file1. 
+Создать жесткую ссылку file4 на file1. 
+Посмотреть, какие айноды у файлов. 
+
+root@karartjom-idea:/home/karartjom/GB_OS# ln -s test1 test3
+root@karartjom-idea:/home/karartjom/GB_OS# ln test1 test4
+root@karartjom-idea:/home/karartjom/GB_OS# ls -i
+6356889 test1  6356890 test2  6356891 test3  6356889 test4
+root@karartjom-idea:/home/karartjom/GB_OS# ls -i test1 test2 test3 test4
+6356889 test1  6356890 test2  6356891 test3  6356889 test4
+
+=============================
+Удалить file1. Что стало с остальными созданными файлами? 
+Попробовать вывести их на экран.
+
+root@karartjom-idea:/home/karartjom/GB_OS# rm test1
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+test2  test3  test4
+root@karartjom-idea:/home/karartjom/GB_OS# cat test2
+blablabla
+
+root@karartjom-idea:/home/karartjom/GB_OS# cat test3
+cat: test3: Нет такого файла или каталога
+root@karartjom-idea:/home/karartjom/GB_OS# cat test4
+blablabla
+
+root@karartjom-idea:/home/karartjom/GB_OS#
+
+=============================
+Дать созданным файлам другие, произвольные имена. 
+Создать новую символическую ссылку. 
+Переместить ссылки в другую директорию.
+
+
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+test2  test3  test4
+root@karartjom-idea:/home/karartjom/GB_OS# mv test2 newfile2
+root@karartjom-idea:/home/karartjom/GB_OS# mv test4 newfile4
+root@karartjom-idea:/home/karartjom/GB_OS# mv test3 newfile3
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+newfile2  newfile3  newfile4
+root@karartjom-idea:/home/karartjom/GB_OS# ln -s newfile2 link2
+root@karartjom-idea:/home/karartjom/GB_OS# ln -s newfile3 link3
+root@karartjom-idea:/home/karartjom/GB_OS# ln -s newfile4 link4
+root@karartjom-idea:/home/karartjom/GB_OS# mkdir linkdir
+root@karartjom-idea:/home/karartjom/GB_OS# mv link2 link3 link4 linkdir/
+root@karartjom-idea:/home/karartjom/GB_OS# ls
+linkdir  newfile2  newfile3  newfile4
+root@karartjom-idea:/home/karartjom/GB_OS# cd linkdir/
+root@karartjom-idea:/home/karartjom/GB_OS/linkdir# ls
+link2  link3  link4
+root@karartjom-idea:/home/karartjom/GB_OS/linkdir#
+
+
+# Создаем файл file1 и наполняем его содержимым
+echo "Произвольный текст" > file1
+
+# Копируем файл file1 в file2
+cp file1 file2
+
+# Создаем символическую ссылку file3 на file1
+ln -s file1 file3
+
+# Создаем жесткую ссылку file4 на file1
+ln file1 file4
+
+# Вывод информации об айнодах файлов
+ls -i file1 file2 file3 file4
+
+# Удаляем файл file1
+rm file1
+
+# Пробуем вывести остальные файлы на экран
+cat file2
+cat file3
+cat file4
+
+# Переименовываем файлы
+mv file2 newfile2
+mv file4 newfile4
+
+# Создаем новую символическую ссылку
+ln -s newfile2 newlink
+
+# Перемещаем ссылки в другую директорию
+mkdir new_directory
+mv newlink new_directory/
+mv file3 new_directory/

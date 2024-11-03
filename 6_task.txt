@@ -1,0 +1,51 @@
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# touch file1
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# chmod 664 file1 
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# touch file2
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# chmod 600 file2
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# ls -lh
+итого 0
+-rw-rw-r-- 1 root root 0 ноя  3 10:13 file1
+-rw------- 1 root root 0 ноя  3 10:13 file2
+
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# mkdir test_dir
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# chown newuser:newgroup test_dir/
+chown: неверный пользователь: «newuser:newgroup»
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# useradd newuser
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# adduser newuser1
+info: Добавляется пользователь «newuser1» ...
+info: Selecting UID/GID from range 1000 to 59999 ...
+info: Добавляется новая группа «newuser1» (1002) ...
+info: Adding new user `newuser1' (1002) with group `newuser1 (1002)' ...
+info: Создаётся домашний каталог «/home/newuser1» ...
+info: Копирование файлов из «/etc/skel» ...
+Новый пароль: 
+Повторите ввод нового пароля: 
+passwd: пароль успешно обновлён
+Изменение информации о пользователе newuser1
+Введите новое значение или нажмите ENTER для выбора значения по умолчанию
+  Полное имя []: newuser1
+  Номер комнаты []: 
+  Рабочий телефон []: 
+  Домашний телефон []: 
+  Другое []: 
+Данная информация корректна? [Y/n] y
+info: Adding new user `newuser1' to supplemental / extra groups `users' ...
+info: Добавляется пользователь «newuser1» в группу «users» ...
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# userdel newuser1
+
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# chown newuser:newuser test_dir/
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# ls -lh
+итого 4,0K
+-rw-rw-r-- 1 root    root       0 ноя  3 10:13 file1
+-rw------- 1 root    root       0 ноя  3 10:13 file2
+drwxr-xr-x 2 newuser newuser 4,0K ноя  3 10:14 test_dir
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# groupadd newgroup
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# usermod -g newgroup newuser
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# usermod -aG newgroup newuser
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# nano /etc/sudo
+sudo.conf          sudoers            sudoers.d/         sudo_logsrvd.conf  
+root@karartjom-idea:/home/karartjom/GB_OS/task_03# nano /etc/sudoers => добавили строку adminuser ALL=(ALL) NOPASSWD: ALL

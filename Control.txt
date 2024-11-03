@@ -1,0 +1,356 @@
+===================================
+1.Подключить репозиторий с nginx любым удобным способом, установить nginx и потом удалить nginx, используя утилиту dpkg.
+===================================
+На сайте https://nginx.org/ru/linux_packages.html#Ubuntu есть пошаговая инструкция по установке.
+
+root@vps1719682689:~# apt install curl gnupg2 ca-certificates lsb-release ubuntu-keyring
+
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+curl is already the newest version (8.5.0-2ubuntu10.4).
+gnupg2 is already the newest version (2.4.4-2ubuntu17).
+ca-certificates is already the newest version (20240203).
+lsb-release is already the newest version (12.0-2).
+ubuntu-keyring is already the newest version (2023.11.28.1).
+0 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+
+root@vps1719682689:~# curl https://nginx.org/keys/nginx_signing.key | gpg --dearmor \
+    | sudo tee /usr/share/keyrings/nginx-archive-keyring.gpg >/dev/null
+	
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 11809  100 11809    0     0  80263      0 --:--:-- --:--:-- --:--:-- 80883
+
+root@vps1719682689:~# gpg --dry-run --quiet --no-keyring --import --import-options import-show /usr/share/keyrings/nginx-archive-keyring.gpg
+pub   rsa4096 2024-05-29 [SC]
+      8540A6F18833A80E9C1653A42FD21310B49F6B46
+uid                      nginx signing key <signing-key-2@nginx.com>
+
+pub   rsa2048 2011-08-19 [SC] [expires: 2027-05-24]
+      573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62
+uid                      nginx signing key <signing-key@nginx.com>
+
+pub   rsa4096 2024-05-29 [SC]
+      9E9BE90EACBCDE69FE9B204CBCDCD8A38D88A2B3
+uid                      nginx signing key <signing-key-3@nginx.com>
+
+root@vps1719682689:~# echo "deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] \
+http://nginx.org/packages/mainline/ubuntu `lsb_release -cs` nginx" \
+    | sudo tee /etc/apt/sources.list.d/nginx.list
+deb [signed-by=/usr/share/keyrings/nginx-archive-keyring.gpg] http://nginx.org/packages/mainline/ubuntu noble nginx
+
+root@vps1719682689:~# echo -e "Package: *\nPin: origin nginx.org\nPin: release o=nginx\nPin-Priority: 900\n" \
+    | sudo tee /etc/apt/preferences.d/99nginx
+Package: *
+Pin: origin nginx.org
+Pin: release o=nginx
+Pin-Priority: 900
+
+root@vps1719682689:~# apt download nginx
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 nginx amd64 1.24.0-2ubuntu7.1 [521 kB]
+Fetched 521 kB in 0s (5509 kB/s)
+W: Download is performed unsandboxed as root as file '/root/nginx_1.24.0-2ubuntu7.1_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
+
+root@vps1719682689:~# ls
+nginx_1.24.0-2ubuntu7.1_amd64.deb
+
+root@vps1719682689:~# dpkg -i nginx_1.24.0-2ubuntu7.1_amd64.deb
+Selecting previously unselected package nginx.
+(Reading database ... 107635 files and directories currently installed.)
+Preparing to unpack nginx_1.24.0-2ubuntu7.1_amd64.deb ...
+Unpacking nginx (1.24.0-2ubuntu7.1) ...
+dpkg: dependency problems prevent configuration of nginx:
+ nginx depends on nginx-common (= 1.24.0-2ubuntu7.1); however:
+  Package nginx-common is not installed.
+dpkg: error processing package nginx (--install):
+ dependency problems - leaving unconfigured
+Processing triggers for man-db (2.12.0-4build2) ...
+Errors were encountered while processing:
+ nginx
+ 
+На данном этапе установить сервис по скачанному deb пакету не удалось. Требовалось устранить зависимость nginx-common (= 1.24.0-2ubuntu7.1). К сожалению, найти такой пакет не получилось.
+ 
+ 
+root@vps1719682689:~# apt download nginx_common
+E: Unable to locate package nginx_common
+root@vps1719682689:~# apt install nginx_common
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+E: Unable to locate package nginx_common
+
+Если провести установку через apt install - то проблем не возникает.
+
+root@vps1719682689:~# apt install nginx
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+nginx is already the newest version (1.24.0-2ubuntu7.1).
+You might want to run 'apt --fix-broken install' to correct these.
+The following packages have unmet dependencies:
+ nginx : Depends: nginx-common (= 1.24.0-2ubuntu7.1) but it is not going to be installed
+E: Unmet dependencies. Try 'apt --fix-broken install' with no packages (or specify a solution).
+root@vps1719682689:~# apt --fix-broken install
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Correcting dependencies... Done
+The following additional packages will be installed:
+  nginx-common
+Suggested packages:
+  fcgiwrap nginx-doc ssl-cert
+The following NEW packages will be installed:
+  nginx-common
+0 upgraded, 1 newly installed, 0 to remove and 2 not upgraded.
+1 not fully installed or removed.
+Need to get 31.2 kB of archives.
+After this operation, 245 kB of additional disk space will be used.
+Do you want to continue? [Y/n] y
+Get:1 http://archive.ubuntu.com/ubuntu noble-updates/main amd64 nginx-common all 1.24.0-2ubuntu7.1 [31.2 kB]
+Fetched 31.2 kB in 0s (487 kB/s)
+Preconfiguring packages ...
+Selecting previously unselected package nginx-common.
+(Reading database ... 107640 files and directories currently installed.)
+Preparing to unpack .../nginx-common_1.24.0-2ubuntu7.1_all.deb ...
+Unpacking nginx-common (1.24.0-2ubuntu7.1) ...
+Setting up nginx (1.24.0-2ubuntu7.1) ...
+Setting up nginx-common (1.24.0-2ubuntu7.1) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/nginx.service → /usr/lib/systemd/system/nginx.service.
+Processing triggers for ufw (0.36.2-6) ...
+needrestart is being skipped since dpkg has failed
+
+После установки сервис nginx успешно запущен
+
+root@vps1719682689:~# systemctl status nginx.service
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; enabled; preset: enabled)
+     Active: active (running) since Sun 2024-11-03 10:51:49 MSK; 11s ago
+       Docs: man:nginx(8)
+    Process: 1683 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+    Process: 1684 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+   Main PID: 1686 (nginx)
+      Tasks: 2 (limit: 1112)
+     Memory: 1.7M (peak: 1.9M)
+        CPU: 23ms
+     CGroup: /system.slice/nginx.service
+             ├─1686 "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;"
+             └─1687 "nginx: worker process"
+
+Nov 03 10:51:49 vps1719682689 systemd[1]: Starting nginx.service - A high performance web server and a reverse proxy se>
+Nov 03 10:51:49 vps1719682689 systemd[1]: Started nginx.service - A high performance web server and a reverse proxy ser>
+
+root@vps1719682689:~# dpkg --purge nginx
+dpkg: dependency problems prevent removal of nginx:
+ nginx-common depends on nginx (>= 1.24.0-2ubuntu7.1).
+ nginx-common depends on nginx (<< 1.24.0-2ubuntu7.1.1~).
+ nginx-common depends on nginx (>= 1.24.0-2ubuntu7.1).
+ nginx-common depends on nginx (<< 1.24.0-2ubuntu7.1.1~).
+
+dpkg: error processing package nginx (--purge):
+ dependency problems - not removing
+Errors were encountered while processing:
+ nginx
+ 
+Через dpkg не получилось, поэтому удаляем nginx через apt remove
+ 
+root@vps1719682689:~# apt remove nginx
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following packages will be REMOVED:
+  nginx nginx-common
+0 upgraded, 0 newly installed, 2 to remove and 2 not upgraded.
+After this operation, 1596 kB disk space will be freed.
+Do you want to continue? [Y/n] y
+(Reading database ... 107683 files and directories currently installed.)
+Removing nginx-common (1.24.0-2ubuntu7.1) ...
+Removing nginx (1.24.0-2ubuntu7.1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+needrestart is being skipped since dpkg has failed
+
+Проверяем что сервиса больше нет.
+
+root@vps1719682689:~# systemctl status nginx.service
+Unit nginx.service could not be found.
+
+Попробуем установить htop через dpkg (своеобразный диспетчер задач для командной строки linux):
+
+root@vps1719682689:~# apt download htop
+Get:1 http://archive.ubuntu.com/ubuntu noble/main amd64 htop amd64 3.3.0-4build1 [171 kB]
+Fetched 171 kB in 1s (282 kB/s)
+W: Download is performed unsandboxed as root as file '/root/htop_3.3.0-4build1_amd64.deb' couldn't be accessed by user '_apt'. - pkgAcquire::Run (13: Permission denied)
+root@vps1719682689:~# ls
+htop_3.3.0-4build1_amd64.deb       nginx_1.24.0-2ubuntu7.1_amd64.deb 
+
+root@vps1719682689:~# dpkg -i htop_3.3.0-4build1_amd64.deb
+Selecting previously unselected package htop.
+(Reading database ... 107645 files and directories currently installed.)
+Preparing to unpack htop_3.3.0-4build1_amd64.deb ...
+Unpacking htop (3.3.0-4build1) ...
+Setting up htop (3.3.0-4build1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+
+Пакет успешно установился, при запуске команды видно процессы и утилизацию по CPU / RAM / Load average / Uptime и сами процессы.
+
+root@vps1719682689:~# htop
+
+Выполняем удаление и проверяем что пакет не установлен:
+
+root@vps1719682689:~# dpkg --purge htop
+(Reading database ... 107655 files and directories currently installed.)
+Removing htop (3.3.0-4build1) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+root@vps1719682689:~# htop
+-bash: /usr/bin/htop: No such file or directory
+
+
+===================================
+2. Установить пакет на свой выбор, используя snap.
+===================================
+Проверяем что у нас не установлен nano на текущий момент:
+
+root@vps1719682689:~# nano
+-bash: /usr/bin/nano: No such file or directory
+
+Выполняем установку:
+root@vps1719682689:~# snap install nano
+error: This revision of snap "nano" was published using classic confinement and thus may perform
+       arbitrary system changes outside of the security sandbox that snaps are usually confined to,
+       which may put your system at risk.
+
+       If you understand and want to proceed repeat the command including --classic.
+	   
+По ошибке пробуем установить еще раз, добавив --classic в команду:
+
+root@vps1719682689:~# snap install nano --classic
+2024-11-03T11:06:04+03:00 INFO Waiting for automatic snapd restart...
+nano 7.2+pkg-4057 from Snapcrafters✪ installed
+
+Пробуем запустить, но получаем ошибку:
+root@vps1719682689:~# nano
+-bash: /usr/bin/nano: No such file or directory
+
+Если же запустить через указание каталога - то ожидаемо nano запускается:
+root@vps1719682689:~# /snap/bin/nano
+root@vps1719682689:~# 
+
+Проверяем на всякий случай что nano через snap действительно установился:
+root@vps1719682689:~# snap info nano
+name:      nano
+summary:   Small, friendly text editor inspired by Pico
+publisher: Snapcrafters✪
+store-url: https://snapcraft.io/nano
+contact:   https://github.com/snapcrafters/nano/issues
+license:   unset
+description: |
+  GNU nano is an easy-to-use text editor originally designed as a replacement
+  for Pico, the ncurses-based editor from the non-free mailer package Pine
+  (itself now available under the Apache License as Alpine).
+
+  However, GNU nano also implements many features missing in Pico, including:
+    - undo/redo
+    - line numbering
+    - syntax coloring
+    - soft-wrapping of overlong lines
+    - selecting text by holding Shift
+    - interactive search and replace (with regular expression support)
+    - a go-to line (and column) command
+    - support for multiple file buffers
+    - auto-indentation
+    - tab completion of filenames and search terms
+    - toggling features while running
+    - and full internationalization support
+
+  This snap is maintained by the Snapcrafters community and is not endorsed or officially maintained
+  by the upstream developers.
+commands:
+  - nano
+  - nano.rnano
+snap-id:      NAVU13p9jFVBNx1yhwBXAle9v2tl62EQ
+tracking:     latest/stable
+refresh-date: today at 11:06 MSK
+channels:
+  latest/stable:    7.2+pkg-4057 2023-10-18 (156) 6MB classic
+  latest/candidate: ↑
+  latest/beta:      7.2+pkg-4057 2023-10-18 (156) 6MB classic
+  latest/edge:      7.2+pkg-ed88 2023-12-15 (162) 6MB classic
+installed:          7.2+pkg-4057            (156) 6MB classic
+
+Но установился он в директорию snap, поэтому нужно добавить этот каталог в PATH, чтобы можно было запустить nano командой в одно слово:
+root@vps1719682689:~# which nano
+/snap/bin/nano
+
+Проверяем какие каталоги указаны в $PATH:
+root@vps1719682689:~# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+
+Добавляем туда каталог snap и проверяем:
+root@vps1719682689:~# export PATH=$PATH:/snap/bin
+root@vps1719682689:~# echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin
+
+Обновляем переменную PATH в конфигурационном файле:
+root@vps1719682689:~# nano ~/.bashrc
+Добавили строку export PATH=$PATH:/snap/bin
+
+И обновляем настройки:
+root@vps1719682689:~# source ~/.bashrc
+
+Проверяем снова работоспособность nano:
+root@vps1719682689:~# snap refresh
+All snaps up to date.
+root@vps1719682689:~# nano
+root@vps1719682689:~#
+
+Успешно запускается, попробуем теперь удалить nano через snap:
+root@vps1719682689:~# snap remove nano
+nano removed
+root@vps1719682689:~#
+
+Всё успешно!
+
+
+===================================
+3.* Создать с помощью nano файл test.txt. Настроить автоматический бэкап этого файла раз в 10 минут в файл с названием test.txt.bak с использованием cron.
+===================================
+Создаем файл с содержимым test123
+root@vps1719682689:~# nano test.txt
+
+Настраиваем резервное копирование:
+root@vps1719682689:~# crontab -e
+no crontab for root - using an empty one
+
+Select an editor.  To change later, run 'select-editor'.
+  1. /bin/nano        <---- easiest
+  2. /usr/bin/vim.basic
+  3. /usr/bin/vim.tiny
+  4. /bin/ed
+
+Choose 1-4 [1]: 1
+crontab: installing new crontab
+root@vps1719682689:~# ls
+htop_3.3.0-4build1_amd64.deb      nginx_1.24.0-2ubuntu7.1_amd64.deb  
+snap                              test.txt
+
+root@vps1719682689:~# pwd
+/root
+
+Настраиваем бекап на 10 минут в файл text.txt.bak командой 
+   */10 * * * * cp /root/test.txt /root/test.txt.bak
+root@vps1719682689:~# crontab -e
+crontab: installing new crontab
+
+Проверяем что примерно через 10 минут создался новый файл test.txt.bak
+root@vps1719682689:~# ls test*
+test.txt
+root@vps1719682689:~# ls test*
+test.txt
+root@vps1719682689:~# ls test*
+test.txt
+root@vps1719682689:~# ls test*
+test.txt  test.txt.bak
+root@vps1719682689:~# cat test.txt.bak
+test123
+
+root@vps1719682689:~#
