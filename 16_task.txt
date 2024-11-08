@@ -1,0 +1,185 @@
+Написать скрипт очистки директорий. На вход принимает путь к директории. Если директория существует, то удаляет в ней все файлы с расширением bak/tmp/backup. Если директории нет - выводит ошибку.
+=====================================================
+root@karartjom-Idea:/home/GB/Bashers# nano dirclean
+root@karartjom-Idea:/home/GB/Bashers# ll
+итого 12
+drwxr-xr-x 2 root root 4096 ноя  8 20:32 ./
+drwxr-xr-x 4 root root 4096 ноя  8 20:29 ../
+-rw-r--r-- 1 root root  126 ноя  8 20:32 dirclean
+root@karartjom-Idea:/home/GB/Bashers# cd dirclean
+bash: cd: dirclean: Это не каталог
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean
+root@karartjom-Idea:/home/GB/Bashers# touch test.tmp test.bak test.backup
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean  test.backup  test.bak  test.tmp
+root@karartjom-Idea:/home/GB/Bashers# chmod +x dirclean
+root@karartjom-Idea:/home/GB/Bashers# ./dirclean Bashers
+Not a dir!
+root@karartjom-Idea:/home/GB/Bashers# cd ..
+root@karartjom-Idea:/home/GB# ./dirclean Bashers
+bash: ./dirclean: Нет такого файла или каталога
+root@karartjom-Idea:/home/GB# ls
+Bashers  wordpress
+root@karartjom-Idea:/home/GB# ./dirclean Bashers
+bash: ./dirclean: Нет такого файла или каталога
+root@karartjom-Idea:/home/GB# ./dirclean bashers
+bash: ./dirclean: Нет такого файла или каталога
+root@karartjom-Idea:/home/GB# cd Bashers/
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean  test.backup  test.bak  test.tmp
+root@karartjom-Idea:/home/GB/Bashers# cd dirclean
+bash: cd: dirclean: Это не каталог
+root@karartjom-Idea:/home/GB/Bashers# ./dirclean bashers
+Not a dir!
+root@karartjom-Idea:/home/GB/Bashers# ./dirclean
+rm: невозможно удалить '*.bak': Нет такого файла или каталога
+rm: невозможно удалить '*.tmp': Нет такого файла или каталога
+rm: невозможно удалить '*.backup': Нет такого файла или каталога
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean  test.backup  test.bak  test.tmp
+root@karartjom-Idea:/home/GB/Bashers# pwd
+/home/GB/Bashers
+root@karartjom-Idea:/home/GB/Bashers# ./dirclean /home/GB/Bashers
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean
+root@karartjom-Idea:/home/GB/Bashers# cat dirclean
+#!/bin/bash
+
+dir=$1
+
+if [ -d $dir ]
+        then
+                cd $dir
+                rm *.bak
+                rm *.tmp
+                rm *.backup
+        else
+                echo 'Not a dir!'
+                exit 2
+fi
+
+Создать скрипт ownersort.sh, который в заданной папке копирует файлы в директории, названные по имени владельца каждого файла. 
+Файл должен принадлежать соответствующему владельцу.
+=====================================================
+root@karartjom-Idea:/home/GB/Bashers# nano ownersort.sh
+root@karartjom-Idea:/home/GB/Bashers# cat ownersort.sh
+#!/bin/bash
+
+dir=$(ls -l | tr -s ' ' '\t' | cut -f '3' | sort -u)
+for i in $dir; do
+        mkdir -p $i
+done
+
+dirfile=$(ls -l | tr -s ' ' '\t' | cut -f '3 9')
+count=0
+for i in $dirfile; do
+        count=$((count+1))
+        if (($count%2))
+                then
+                        dir=$i
+                        echo $dir = $i zero
+                else
+                        if [ -f ./$i ]
+                                then
+                                        cp ./$i ./$dir/$i
+                        fi
+        fi
+done
+
+root@karartjom-Idea:/home/GB/Bashers# touch test.11
+root@karartjom-Idea:/home/GB/Bashers# ls -lh
+итого 8,0K
+-rwxr-xr-x 1 root root 126 ноя  8 20:32 dirclean
+-rw-r--r-- 1 root root 331 ноя  8 20:41 ownersort.sh
+-rw-r--r-- 1 root root   0 ноя  8 20:44 test.11
+root@karartjom-Idea:/home/GB/Bashers# chown karartjom:karartjom test.11
+root@karartjom-Idea:/home/GB/Bashers# ls -lh
+итого 8,0K
+-rwxr-xr-x 1 root      root      126 ноя  8 20:32 dirclean
+-rw-r--r-- 1 root      root      331 ноя  8 20:41 ownersort.sh
+-rw-r--r-- 1 karartjom karartjom   0 ноя  8 20:44 test.11
+root@karartjom-Idea:/home/GB/Bashers# chmod +x ownersort.sh
+root@karartjom-Idea:/home/GB/Bashers# ownersort.sh
+ownersort.sh: команда не найдена
+root@karartjom-Idea:/home/GB/Bashers# sh ownersort.sh
+ownersort.sh: 12: 1%2: not found
+ownersort.sh: 12: 2%2: not found
+cp: цель 'root/dirclean': Нет такого файла или каталога
+ownersort.sh: 12: 3%2: not found
+ownersort.sh: 12: 4%2: not found
+ownersort.sh: 12: 5%2: not found
+ownersort.sh: 12: 6%2: not found
+cp: цель 'root/ownersort.sh': Нет такого файла или каталога
+ownersort.sh: 12: 7%2: not found
+ownersort.sh: 12: 8%2: not found
+ownersort.sh: 12: 9%2: not found
+ownersort.sh: 12: 10%2: not found
+cp: цель 'root/test.11': Нет такого файла или каталога
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean  karartjom  ownersort.sh  root  test.11
+root@karartjom-Idea:/home/GB/Bashers# ll
+итого 24
+drwxr-xr-x 4 root      root      4096 ноя  8 20:46 ./
+drwxr-xr-x 4 root      root      4096 ноя  8 20:29 ../
+-rwxr-xr-x 1 root      root       126 ноя  8 20:32 dirclean*
+drwxr-xr-x 2 root      root      4096 ноя  8 20:46 karartjom/
+-rwxr-xr-x 1 root      root       331 ноя  8 20:41 ownersort.sh*
+drwxr-xr-x 2 root      root      4096 ноя  8 20:46 root/
+-rw-r--r-- 1 karartjom karartjom    0 ноя  8 20:44 test.11
+root@karartjom-Idea:/home/GB/Bashers# cd karartjom/
+root@karartjom-Idea:/home/GB/Bashers/karartjom# ls -lh
+итого 0
+root@karartjom-Idea:/home/GB/Bashers/karartjom# cd ..
+root@karartjom-Idea:/home/GB/Bashers# sh ownersort.sh
+ownersort.sh: 12: 1%2: not found
+ownersort.sh: 12: 2%2: not found
+cp: цель 'root/dirclean': Нет такого файла или каталога
+ownersort.sh: 12: 3%2: not found
+ownersort.sh: 12: 4%2: not found
+ownersort.sh: 12: 5%2: not found
+ownersort.sh: 12: 6%2: not found
+cp: цель 'root/ownersort.sh': Нет такого файла или каталога
+ownersort.sh: 12: 7%2: not found
+ownersort.sh: 12: 8%2: not found
+ownersort.sh: 12: 9%2: not found
+ownersort.sh: 12: 10%2: not found
+cp: цель 'root/test.11': Нет такого файла или каталога
+root@karartjom-Idea:/home/GB/Bashers# cd root
+
+Папки создаются, но не копируются файлы. 
+Полностью поправить не получилось. Но в таком варианте работает, что копирует конкретные файлы в папку указанного владельца.
+root@karartjom-Idea:/home/GB/Bashers# cat ownersort.sh
+#!/bin/bash
+
+owners=$(ls -l | tr -s ' ' '\t' | cut -f 3 | sort -u)
+
+for owner in $owners; do
+    mkdir -p "$owner"
+done
+
+ls -l | tr -s ' ' '\t' | awk '{print $3 "\t" $9}' | while read -r owner file; do
+    if [ -f "$file" ]; then
+        cp "$file" "$owner/"
+    fi
+done
+
+root@karartjom-Idea:/home/GB/Bashers# sh ownersort.sh
+root@karartjom-Idea:/home/GB/Bashers# ls
+dirclean  karartjom  ownersort.sh  root  test.11
+root@karartjom-Idea:/home/GB/Bashers# cd karartjom/
+root@karartjom-Idea:/home/GB/Bashers/karartjom# ll
+итого 8
+drwxr-xr-x 2 root root 4096 ноя  8 20:54 ./
+drwxr-xr-x 4 root root 4096 ноя  8 20:54 ../
+-rw-r--r-- 1 root root    0 ноя  8 20:54 test.11
+root@karartjom-Idea:/home/GB/Bashers/karartjom# cd ..
+root@karartjom-Idea:/home/GB/Bashers# cd root/
+root@karartjom-Idea:/home/GB/Bashers/root# ll
+итого 16
+drwxr-xr-x 2 root root 4096 ноя  8 20:54 ./
+drwxr-xr-x 4 root root 4096 ноя  8 20:54 ../
+-rwxr-xr-x 1 root root  126 ноя  8 20:54 dirclean*
+-rwxr-xr-x 1 root root  509 ноя  8 20:54 ownersort.sh*
+root@karartjom-Idea:/home/GB/Bashers/root# cd ..
+

@@ -1,0 +1,399 @@
+• Настроить статическую конфигурацию (без DHCP) в Ubuntu через ip.
+Настроить IP, маршрут по умолчанию и DNS-сервера (1.1.1.1 и 8.8.8.8).
+Проверить работоспособность сети.
+=================================
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip addr add 192.168.1.120/255.255.255.0 broadcast 192.168.0.255 dev wlp9s0
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute
+       valid_lft forever preferred_lft forever
+2: enp11s0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN group default qlen 1000
+    link/ether f8:a9:63:47:43:02 brd ff:ff:ff:ff:ff:ff
+3: wlp9s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    link/ether 48:d2:24:97:82:b5 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.22/24 brd 192.168.1.255 scope global dynamic noprefixroute wlp9s0
+       valid_lft 86038sec preferred_lft 86038sec
+    inet 192.168.1.120/24 brd 192.168.0.255 scope global secondary wlp9s0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::9725:fd06:3246:4a64/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip route add default via 192.168.0.1 dev wlp9s0
+Error: Nexthop has invalid gateway.
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip route add default via 192.168.1.1 dev wlp9s0
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip r
+default via 192.168.1.1 dev wlp9s0
+default via 192.168.1.1 dev wlp9s0 proto dhcp src 192.168.1.22 metric 600
+10.0.3.0/24 dev lxcbr0 proto kernel scope link src 10.0.3.1
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+172.18.0.0/16 dev docker_gwbridge proto kernel scope link src 172.18.0.1
+172.21.0.0/16 dev br-4f1ae82956e0 proto kernel scope link src 172.21.0.1
+172.22.0.0/16 dev br-9d727bc23e50 proto kernel scope link src 172.22.0.1
+192.168.1.0/24 dev wlp9s0 proto kernel scope link src 192.168.1.22 metric 600
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip route del default via 192.168.1.1 dev wlp9s0
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ip r
+default via 192.168.1.1 dev wlp9s0 proto dhcp src 192.168.1.22 metric 600
+10.0.3.0/24 dev lxcbr0 proto kernel scope link src 10.0.3.1
+172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+172.18.0.0/16 dev docker_gwbridge proto kernel scope link src 172.18.0.1
+172.21.0.0/16 dev br-4f1ae82956e0 proto kernel scope link src 172.21.0.1
+172.22.0.0/16 dev br-9d727bc23e50 proto kernel scope link src 172.22.0.1
+192.168.1.0/24 dev wlp9s0 proto kernel scope link src 192.168.1.22 metric 600
+
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=57 time=29.8 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=57 time=36.3 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=57 time=27.2 ms
+^C
+--- 8.8.8.8 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 27.230/31.098/36.288/3.814 ms
+root@karartjom-idea:/home/karartjom/GB_OS/task_04#
+
+
+• Настроить статическую конфигурацию (без DHCP) в Ubuntu через netplan.
+Настроить IP, маршрут по умолчанию и DNS-сервера (1.1.1.1 и 8.8.8.8).
+Проверить работоспособность сети.
+=================================
+root@karartjom-idea:/home/karartjom/GB_OS/task_04# cd /etc/netplan/
+root@karartjom-idea:/etc/netplan# ls
+01-network-manager-all.yml  90-NM-d0a07974-631d-45b2-8f5c-572dc30db7d2.yaml
+
+У меня подключение настроено через WiFi, поэтому тут уже есть созданные файлы с конфигурацией, разберем что у нас в файле с подключением к WiFi:
+root@karartjom-idea:/etc/netplan# nano 01-network-manager-all.yml
+network:
+  version: 2
+  wifis:
+    NM-d0a07974-631d-45b2-8f5c-572dc30db7d2:
+      renderer: NetworkManager
+      match:
+        name: "wlp9s0"
+      dhcp4: no
+      addresses: [192.168.1.22/24]
+      routes:
+        - to: default
+          via: 192.168.1.1
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 8.8.4.4
+      dhcp6: true
+      access-points:
+        "Zorrki":
+          auth:
+            key-management: "psk"
+            password: "**********"
+          networkmanager:
+            uuid: "d0a07974-631d-45b2-8f5c-572dc30db7d2"
+            name: "Zorr"
+            passthrough:
+              wifi-security.auth-alg: "open"
+              ipv6.addr-gen-mode: "default"
+              ipv6.ip6-privacy: "-1"
+              proxy._: ""
+      networkmanager:
+        uuid: "d0a07974-631d-45b2-8f5c-572dc30db7d2"
+        name: "Zorrki"
+		
+Проверяем что все работает, и конфигурация сохранена:
+root@karartjom-idea:/etc/netplan# netplan try
+Do you want to keep these settings?
+
+
+Press ENTER before the timeout to accept the new configuration
+
+
+Changes will revert in 115 seconds
+Configuration accepted.
+root@karartjom-idea:/etc/netplan#
+
+root@karartjom-idea:/etc/netplan# ping 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=57 time=32.8 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=57 time=27.5 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=57 time=52.9 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=57 time=28.8 ms
+^C
+--- 8.8.8.8 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3003ms
+rtt min/avg/max/mdev = 27.483/35.511/52.932/10.246 ms
+
+• Настроить правила iptables для доступности сервисов на TCP-портах 22, 80 и 443.
+Также сервер должен иметь возможность устанавливать подключения к серверу обновлений.
+Остальные подключения запретить.
+•* Запросы на порт 8090 перенаправлять на порт 80 (на этом же сервере).
+=================================
+root@karartjom-idea:/etc/netplan# iptables -nvL
+Chain INPUT (policy DROP 8 packets, 3866 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+21231 2012K ufw-before-logging-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+21231 2012K ufw-before-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+  451  109K ufw-after-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    8  3866 ufw-after-logging-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    8  3866 ufw-reject-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    8  3866 ufw-track-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DOCKER-USER  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 DOCKER-ISOLATION-STAGE-1  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     0    --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  *      br-9d727bc23e50  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     0    --  *      br-9d727bc23e50  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  br-9d727bc23e50 !br-9d727bc23e50  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  br-9d727bc23e50 br-9d727bc23e50  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  *      br-4f1ae82956e0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     0    --  *      br-4f1ae82956e0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  br-4f1ae82956e0 !br-4f1ae82956e0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  br-4f1ae82956e0 br-4f1ae82956e0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  *      docker_gwbridge  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     0    --  *      docker_gwbridge  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     0    --  docker_gwbridge !docker_gwbridge  0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-before-logging-forward  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-before-forward  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-after-forward  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-after-logging-forward  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-reject-forward  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-track-forward  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 DROP       0    --  docker_gwbridge docker_gwbridge  0.0.0.0/0            0.0.0.0/0
+
+Chain OUTPUT (policy ACCEPT 41 packets, 1940 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+20268 1756K ufw-before-logging-output  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+20268 1756K ufw-before-output  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+  349 35698 ufw-after-output  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+  349 35698 ufw-after-logging-output  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+  349 35698 ufw-reject-output  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+  349 35698 ufw-track-output  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+
+root@karartjom-idea:/# iptables-save > ip.rules
+root@karartjom-idea:/# cat ip.rules
+# Generated by iptables-save v1.8.10 (nf_tables) on Mon Nov  4 10:26:33 2024
+*filter
+:INPUT DROP [8:3866]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [41:1940]
+:DOCKER - [0:0]
+:DOCKER-ISOLATION-STAGE-1 - [0:0]
+:DOCKER-ISOLATION-STAGE-2 - [0:0]
+:DOCKER-USER - [0:0]
+:ufw-after-forward - [0:0]
+:ufw-after-input - [0:0]
+:ufw-after-logging-forward - [0:0]
+:ufw-after-logging-input - [0:0]
+:ufw-after-logging-output - [0:0]
+:ufw-after-output - [0:0]
+:ufw-before-forward - [0:0]
+:ufw-before-input - [0:0]
+:ufw-before-logging-forward - [0:0]
+:ufw-before-logging-input - [0:0]
+:ufw-before-logging-output - [0:0]
+:ufw-before-output - [0:0]
+:ufw-logging-allow - [0:0]
+:ufw-logging-deny - [0:0]
+:ufw-not-local - [0:0]
+:ufw-reject-forward - [0:0]
+:ufw-reject-input - [0:0]
+:ufw-reject-output - [0:0]
+:ufw-skip-to-policy-forward - [0:0]
+:ufw-skip-to-policy-input - [0:0]
+:ufw-skip-to-policy-output - [0:0]
+:ufw-track-forward - [0:0]
+:ufw-track-input - [0:0]
+:ufw-track-output - [0:0]
+:ufw-user-forward - [0:0]
+:ufw-user-input - [0:0]
+:ufw-user-limit - [0:0]
+:ufw-user-limit-accept - [0:0]
+:ufw-user-logging-forward - [0:0]
+:ufw-user-logging-input - [0:0]
+:ufw-user-logging-output - [0:0]
+:ufw-user-output - [0:0]
+-A INPUT -j ufw-before-logging-input
+-A INPUT -j ufw-before-input
+-A INPUT -j ufw-after-input
+-A INPUT -j ufw-after-logging-input
+-A INPUT -j ufw-reject-input
+-A INPUT -j ufw-track-input
+-A FORWARD -j DOCKER-USER
+-A FORWARD -j DOCKER-ISOLATION-STAGE-1
+-A FORWARD -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -o docker0 -j DOCKER
+-A FORWARD -i docker0 ! -o docker0 -j ACCEPT
+-A FORWARD -i docker0 -o docker0 -j ACCEPT
+-A FORWARD -o br-9d727bc23e50 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -o br-9d727bc23e50 -j DOCKER
+-A FORWARD -i br-9d727bc23e50 ! -o br-9d727bc23e50 -j ACCEPT
+-A FORWARD -i br-9d727bc23e50 -o br-9d727bc23e50 -j ACCEPT
+-A FORWARD -o br-4f1ae82956e0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -o br-4f1ae82956e0 -j DOCKER
+-A FORWARD -i br-4f1ae82956e0 ! -o br-4f1ae82956e0 -j ACCEPT
+-A FORWARD -i br-4f1ae82956e0 -o br-4f1ae82956e0 -j ACCEPT
+-A FORWARD -o docker_gwbridge -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A FORWARD -o docker_gwbridge -j DOCKER
+-A FORWARD -i docker_gwbridge ! -o docker_gwbridge -j ACCEPT
+-A FORWARD -j ufw-before-logging-forward
+-A FORWARD -j ufw-before-forward
+-A FORWARD -j ufw-after-forward
+-A FORWARD -j ufw-after-logging-forward
+-A FORWARD -j ufw-reject-forward
+-A FORWARD -j ufw-track-forward
+-A FORWARD -i docker_gwbridge -o docker_gwbridge -j DROP
+-A OUTPUT -j ufw-before-logging-output
+-A OUTPUT -j ufw-before-output
+-A OUTPUT -j ufw-after-output
+-A OUTPUT -j ufw-after-logging-output
+-A OUTPUT -j ufw-reject-output
+-A OUTPUT -j ufw-track-output
+-A DOCKER -d 172.21.0.2/32 ! -i br-4f1ae82956e0 -o br-4f1ae82956e0 -p tcp -m tcp --dport 8080 -j ACCEPT
+-A DOCKER -d 172.22.0.2/32 ! -i br-9d727bc23e50 -o br-9d727bc23e50 -p tcp -m tcp --dport 80 -j ACCEPT
+-A DOCKER-ISOLATION-STAGE-1 -i docker0 ! -o docker0 -j DOCKER-ISOLATION-STAGE-2
+-A DOCKER-ISOLATION-STAGE-1 -i br-9d727bc23e50 ! -o br-9d727bc23e50 -j DOCKER-ISOLATION-STAGE-2
+-A DOCKER-ISOLATION-STAGE-1 -i br-4f1ae82956e0 ! -o br-4f1ae82956e0 -j DOCKER-ISOLATION-STAGE-2
+-A DOCKER-ISOLATION-STAGE-1 -i docker_gwbridge ! -o docker_gwbridge -j DOCKER-ISOLATION-STAGE-2
+-A DOCKER-ISOLATION-STAGE-1 -j RETURN
+-A DOCKER-ISOLATION-STAGE-2 -o docker0 -j DROP
+-A DOCKER-ISOLATION-STAGE-2 -o br-9d727bc23e50 -j DROP
+-A DOCKER-ISOLATION-STAGE-2 -o br-4f1ae82956e0 -j DROP
+-A DOCKER-ISOLATION-STAGE-2 -o docker_gwbridge -j DROP
+-A DOCKER-ISOLATION-STAGE-2 -j RETURN
+-A DOCKER-USER -j RETURN
+-A ufw-after-input -p udp -m udp --dport 137 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 138 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 139 -j ufw-skip-to-policy-input
+-A ufw-after-input -p tcp -m tcp --dport 445 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 67 -j ufw-skip-to-policy-input
+-A ufw-after-input -p udp -m udp --dport 68 -j ufw-skip-to-policy-input
+-A ufw-after-input -m addrtype --dst-type BROADCAST -j ufw-skip-to-policy-input
+-A ufw-after-logging-forward -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw-after-logging-input -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-forward -p icmp -m icmp --icmp-type 8 -j ACCEPT
+-A ufw-before-forward -j ufw-user-forward
+-A ufw-before-input -i lo -j ACCEPT
+-A ufw-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-input -m conntrack --ctstate INVALID -j ufw-logging-deny
+-A ufw-before-input -m conntrack --ctstate INVALID -j DROP
+-A ufw-before-input -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 12 -j ACCEPT
+-A ufw-before-input -p icmp -m icmp --icmp-type 8 -j ACCEPT
+-A ufw-before-input -p udp -m udp --sport 67 --dport 68 -j ACCEPT
+-A ufw-before-input -j ufw-not-local
+-A ufw-before-input -d 224.0.0.251/32 -p udp -m udp --dport 5353 -j ACCEPT
+-A ufw-before-input -d 239.255.255.250/32 -p udp -m udp --dport 1900 -j ACCEPT
+-A ufw-before-input -j ufw-user-input
+-A ufw-before-output -o lo -j ACCEPT
+-A ufw-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A ufw-before-output -j ufw-user-output
+-A ufw-logging-allow -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW ALLOW] "
+-A ufw-logging-deny -m conntrack --ctstate INVALID -m limit --limit 3/min --limit-burst 10 -j RETURN
+-A ufw-logging-deny -m limit --limit 3/min --limit-burst 10 -j LOG --log-prefix "[UFW BLOCK] "
+-A ufw-not-local -m addrtype --dst-type LOCAL -j RETURN
+-A ufw-not-local -m addrtype --dst-type MULTICAST -j RETURN
+-A ufw-not-local -m addrtype --dst-type BROADCAST -j RETURN
+-A ufw-not-local -m limit --limit 3/min --limit-burst 10 -j ufw-logging-deny
+-A ufw-not-local -j DROP
+-A ufw-skip-to-policy-forward -j DROP
+-A ufw-skip-to-policy-input -j DROP
+-A ufw-skip-to-policy-output -j ACCEPT
+-A ufw-track-output -p tcp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw-track-output -p udp -m conntrack --ctstate NEW -j ACCEPT
+-A ufw-user-input -p tcp -m tcp --dport 22 -j ACCEPT
+-A ufw-user-limit -m limit --limit 3/min -j LOG --log-prefix "[UFW LIMIT BLOCK] "
+-A ufw-user-limit -j REJECT --reject-with icmp-port-unreachable
+-A ufw-user-limit-accept -j ACCEPT
+COMMIT
+# Completed on Mon Nov  4 10:26:33 2024
+# Generated by iptables-save v1.8.10 (nf_tables) on Mon Nov  4 10:26:33 2024
+*nat
+:PREROUTING ACCEPT [534:117764]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [377:32603]
+:POSTROUTING ACCEPT [381:32895]
+:DOCKER - [0:0]
+-A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+-A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+-A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+-A POSTROUTING -s 172.22.0.0/16 ! -o br-9d727bc23e50 -j MASQUERADE
+-A POSTROUTING -s 172.21.0.0/16 ! -o br-4f1ae82956e0 -j MASQUERADE
+-A POSTROUTING -s 172.18.0.0/16 ! -o docker_gwbridge -j MASQUERADE
+-A POSTROUTING -s 172.21.0.2/32 -d 172.21.0.2/32 -p tcp -m tcp --dport 8080 -j MASQUERADE
+-A POSTROUTING -s 172.22.0.2/32 -d 172.22.0.2/32 -p tcp -m tcp --dport 80 -j MASQUERADE
+-A DOCKER -i docker0 -j RETURN
+-A DOCKER -i br-9d727bc23e50 -j RETURN
+-A DOCKER -i br-4f1ae82956e0 -j RETURN
+-A DOCKER -i docker_gwbridge -j RETURN
+-A DOCKER ! -i br-4f1ae82956e0 -p tcp -m tcp --dport 6080 -j DNAT --to-destination 172.21.0.2:8080
+-A DOCKER ! -i br-9d727bc23e50 -p tcp -m tcp --dport 8081 -j DNAT --to-destination 172.22.0.2:80
+COMMIT
+# Completed on Mon Nov  4 10:26:33 2024
+
+Добавляем правила:
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 8080 -j ACCEPT
+-A PREROUTING -p tcp -m tcp --dport 8090 -j REDIRECT --to-ports 80
+
+root@karartjom-idea:/# iptables-restore < ip.rules
+root@karartjom-idea:/# iptables-save > ip.rules
+root@karartjom-idea:/# iptables -nvL
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+  583 42868 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443
+   44  3934 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0
+   24  2016 ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080
+	
+• Запретить любой входящий трафик с IP 3.4.5.6.
+===============================================
+root@karartjom-idea:/# iptables -I INPUT -s 3.4.5.6 -j DROP
+root@karartjom-idea:/# iptables -nvL
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DROP       0    --  *      *       3.4.5.6              0.0.0.0/0
+ 2090  156K ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443
+  313 28730 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0
+  189 16198 ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080
+
+•* Разрешить подключение по SSH только из сети 192.168.0.0/24
+=============================
+root@karartjom-idea:/# iptables -I INPUT -s 192.168.0.0/24 -p tcp --dport 22 -j ACCEPT
+root@karartjom-idea:/# iptables -nvL
+Chain INPUT (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 ACCEPT     6    --  *      *       192.168.0.0/24       0.0.0.0/0            tcp dpt:22
+    0     0 DROP       0    --  *      *       3.4.5.6              0.0.0.0/0
+ 4159  313K ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:80
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443
+  507 46792 ACCEPT     0    --  lo     *       0.0.0.0/0            0.0.0.0/0
+ 1336 1523K ACCEPT     0    --  *      *       0.0.0.0/0            0.0.0.0/0            state RELATED,ESTABLISHED
+    0     0 ACCEPT     6    --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080
+   96 21350 ufw-before-logging-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+   96 21350 ufw-before-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+   81 18648 ufw-after-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-after-logging-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-reject-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ufw-track-input  0    --  *      *       0.0.0.0/0            0.0.0.0/0
